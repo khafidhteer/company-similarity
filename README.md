@@ -7,8 +7,15 @@ A Python-based CLI tool that matches company names from an input CSV file or fol
 - Fast fuzzy matching using `rapidfuzz`
 - Support for processing a single input file or all CSV files in an input folder
 - Returns up to 5 top matches with confidence scores for each input company, sorted by similarity (descending)
+- **Real-time progress tracking** with estimated time remaining (ETA)
 - Docker-ready execution to avoid polluting local Python environments
 - Adds `matched_company`, `confidence`, and up to 4 additional match columns to output CSV files
+
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Usage
 

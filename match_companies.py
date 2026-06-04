@@ -16,9 +16,11 @@ import csv
 import os
 import re
 import sys
+import time
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+from tqdm import tqdm
 from rapidfuzz import fuzz, process
 
 DEFAULT_INPUT_PATH = "input"
@@ -193,6 +195,10 @@ def match_file(
     scorer_name: str,
     input_column: Optional[str],
 ) -> None:
+    # First, count total lines for progress bar
+    with input_path.open("r", newline="", encoding="utf-8-sig") as f:
+        total_rows = sum(1 for _ in f) - 1  # subtract header
+
     with input_path.open("r", newline="", encoding="utf-8-sig") as infile, output_path.open(
         "w", newline="", encoding="utf-8"
     ) as outfile:
@@ -213,6 +219,16 @@ def match_file(
         writer.writeheader()
 
         scorer = SCORERS[scorer_name]
+        
+        # Initialize progress bar
+        pbar = tqdm(
+            total=max(0, total_rows),
+            desc=f"Matching {input_path.name}",
+            unit="row",
+            ncols=100,
+            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]"
+        )
+
         for row in reader:
             query = (row.get(column) or "").strip()
             if query:
@@ -227,7 +243,7 @@ def match_file(
                 )
                 # Populate the matched company columns
                 if matches:
-                    for idx, (company, score) in enumerate(matches, 1):
+                    for idx, (company, score, _) in enumerate(matches, 1):
                         row[f"matched_company{'' if idx == 1 else f'_{idx}'}"] = company
                         row[f"confidence{'' if idx == 1 else f'_{idx}'}"] = f"{int(round(score))}"
                 else:
@@ -239,6 +255,9 @@ def match_file(
                 row["matched_company"] = ""
                 row["confidence"] = ""
             writer.writerow(row)
+            pbar.update(1)
+        
+        pbar.close()
 
 
 def build_output_path(input_path: Path, output_dir: Path) -> Path:

@@ -19,6 +19,7 @@ Build a Python-based matching tool that takes an input CSV of company names and 
 - [x] Add a small verification/test step with sample input and master files.
 - [x] Support up to 5 top matches with confidence scores sorted by similarity (descending).
 - [x] Create `.gitignore` to exclude input/, master/, and output/ folders from version control.
+- [x] Implement real-time progress bar with ETA (hour:min:sec) for the matching process.
 
 ## Notes
 - This implementation is optimized for speed and memory efficiency.
