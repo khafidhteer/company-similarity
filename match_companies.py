@@ -201,7 +201,14 @@ def match_file(
             raise ValueError(f"Input file has no headers: {input_path}")
 
         column = input_column or guess_name_column(reader.fieldnames)
-        fieldnames = list(reader.fieldnames) + ["matched_company", "confidence"]
+        # Add columns for top 5 matches with their confidence scores
+        fieldnames = list(reader.fieldnames) + [
+            "matched_company", "confidence",
+            "matched_company_2", "confidence_2",
+            "matched_company_3", "confidence_3",
+            "matched_company_4", "confidence_4",
+            "matched_company_5", "confidence_5",
+        ]
         writer = csv.DictWriter(outfile, fieldnames=fieldnames)
         writer.writeheader()
 
@@ -209,20 +216,26 @@ def match_file(
         for row in reader:
             query = (row.get(column) or "").strip()
             if query:
-                match = process.extractOne(
+                # Get top 5 matches sorted by score in descending order
+                matches = process.extract(
                     query,
                     master_companies,
                     scorer=scorer,
                     processor=normalize_name,
                     score_cutoff=threshold,
+                    limit=5,
                 )
-                if match:
-                    row["matched_company"] = match[0]
-                    row["confidence"] = f"{int(round(match[1]))}"
+                # Populate the matched company columns
+                if matches:
+                    for idx, (company, score) in enumerate(matches, 1):
+                        row[f"matched_company{'' if idx == 1 else f'_{idx}'}"] = company
+                        row[f"confidence{'' if idx == 1 else f'_{idx}'}"] = f"{int(round(score))}"
                 else:
+                    # No matches found, leave all columns empty
                     row["matched_company"] = ""
                     row["confidence"] = ""
             else:
+                # Empty query, leave all match columns empty
                 row["matched_company"] = ""
                 row["confidence"] = ""
             writer.writerow(row)
